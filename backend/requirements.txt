@@ -1,0 +1,10 @@
+flask
+langchain
+langchain_community
+google-generativeai
+sentence-transformers
+flask-cors
+faiss-cpu
+fastapi
+uvicorn
+sqlalchemy

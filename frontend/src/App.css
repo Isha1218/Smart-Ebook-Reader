@@ -1,0 +1,37 @@
+body, html, * {
+  font-family: "Open Sans Variable", sans-serif;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.menu-button {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: black
+}
+
+.pages-left-div {
+  display: flex;
+  justify-content: center;
+}
+
+.pages-left {
+  color: #A1A1A1;
+  z-index: 1001;
+}
