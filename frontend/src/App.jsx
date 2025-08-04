@@ -79,7 +79,6 @@ function App() {
     async function loadHighlights() {
       try {
         const dbHighlights = await fetchHighlights();
-        console.log(dbHighlights)
         setHighlights(dbHighlights);
       } catch (err) {
         console.error('Error loading highlights:', err);
@@ -90,44 +89,30 @@ function App() {
 
   // Use a dedicated useCallback function to apply highlights,
   // making it clear this is a manual, atomic operation.
-  const applyHighlights = useCallback(() => {
+  const applyHighlights = useCallback(async () => {
     if (!renditionRef.current || !highlights) return;
-  
-    // console.log('Clearing and re-applying highlights...');
-  
-    // // Remove all previous annotations by ID
-    // if (renditionRef.current.annotations && renditionRef.current.annotations._annotations) {
-    //   Object.keys(renditionRef.current.annotations._annotations).forEach((id) => {
-    //     try {
-    //       renditionRef.current.annotations.remove(id, 'highlight');
-    //     } catch (e) {
-    //       console.warn(`Could not remove highlight with ID ${id}:`, e);
-    //     }
-    //   });
-    // }
-  
-    // Apply all highlights again with their unique IDs
-    highlights.forEach((highlight) => {
-      try {
-        renditionRef.current.annotations.highlight(
-          highlight.cfi_range,
-          { id: highlight.id }, // 👈 Provide a unique ID
-          (e) => {
-            console.log('Highlight clicked:', e);
-          },
-          undefined,
-          {
-            fill: 'yellow',
-            'fill-opacity': '0.3',
-            'mix-blend-mode': 'multiply'
-          }
-        );
-      } catch (error) {
-        console.error(`Error applying highlight for CFI ${highlight.cfi_range}:`, error);
-      }
+    
+    // Apply all highlights from the state.
+    highlights.forEach(highlight => {
+        try {
+            renditionRef.current.annotations.highlight(
+                highlight.cfi_range,
+                {},
+                (e) => {
+                    console.log('Highlight clicked:', e);
+                },
+                undefined,
+                {
+                    fill: 'yellow',
+                    'fill-opacity': '0.3',
+                    'mix-blend-mode': 'multiply'
+                }
+            );
+        } catch (error) {
+            console.error(`Error applying highlight for CFI ${highlight.cfi_range}:`, error);
+        }
     });
   }, [highlights]);
-  
 
   // This useEffect will re-run `applyHighlights` whenever the location changes.
   // This is the main way to handle navigation.
@@ -154,11 +139,9 @@ function App() {
 
       setHighlights(prev => [...prev, newHighlight]);
 
-      // IMPORTANT: After adding the new highlight to state, we need to manually
-      // trigger the application. We call our dedicated function here.
       applyHighlights();
       
-      await addHighlight(selectedText.text, selectedText.cfiRange, 'Chapter 1', highlightId)
+      await addHighlight(highlightId, selectedText.text, selectedText.cfiRange, 'Chapter 1')
       
       clearSelection();
     } catch (error) {
