@@ -89,30 +89,43 @@ function App() {
 
   // Use a dedicated useCallback function to apply highlights,
   // making it clear this is a manual, atomic operation.
-  const applyHighlights = useCallback(async () => {
+  const applyHighlights = useCallback(() => {
     if (!renditionRef.current || !highlights) return;
-    
-    // Apply all highlights from the state.
-    highlights.forEach(highlight => {
-        try {
-            renditionRef.current.annotations.highlight(
-                highlight.cfi_range,
-                {},
-                (e) => {
-                    console.log('Highlight clicked:', e);
-                },
-                undefined,
-                {
-                    fill: 'yellow',
-                    'fill-opacity': '0.3',
-                    'mix-blend-mode': 'multiply'
-                }
-            );
-        } catch (error) {
-            console.error(`Error applying highlight for CFI ${highlight.cfi_range}:`, error);
+  
+    const rendition = renditionRef.current;
+  
+    try {
+      // `rendition.annotations._annotations` is an object, not an array
+      Object.values(rendition.annotations._annotations).forEach((annotation) => {
+        if (annotation.type === 'highlight') {
+          rendition.annotations.remove(annotation.cfiRange, 'highlight');
         }
+      });
+    } catch (error) {
+      console.warn('Failed to clear previous highlights:', error);
+    }
+  
+    highlights.forEach(highlight => {
+      try {
+        rendition.annotations.highlight(
+          highlight.cfi_range,
+          {},
+          (e) => {
+            console.log('Highlight clicked:', e);
+          },
+          undefined,
+          {
+            fill: 'yellow',
+            'fill-opacity': '0.3',
+            'mix-blend-mode': 'multiply'
+          }
+        );
+      } catch (error) {
+        console.error(`Error applying highlight for CFI ${highlight.cfi_range}:`, error);
+      }
     });
   }, [highlights]);
+  
 
   // This useEffect will re-run `applyHighlights` whenever the location changes.
   // This is the main way to handle navigation.
