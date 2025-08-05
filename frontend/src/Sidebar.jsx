@@ -1,7 +1,7 @@
 import './Sidebar.css';
 import { AiFillBackward, AiOutlineClose, AiOutlineBars, AiOutlineSetting } from "react-icons/ai";
 import { BsHighlighter } from "react-icons/bs";
-import { BiMessageDots, BiSend, BiSearch } from "react-icons/bi";
+import { BiMessageDots, BiSend, BiSearch, BiTrash } from "react-icons/bi";
 import React, { useState, useRef, useEffect } from 'react';
 
 function Sidebar({ isOpen, toggleSidebar, chapters, goToChapter, handleRecap, highlights, lookUpText, selectedText, handleQA, goToCfi }) {
@@ -127,9 +127,14 @@ function Sidebar({ isOpen, toggleSidebar, chapters, goToChapter, handleRecap, hi
       highlights.length === 0 ? (
         <p>No highlights yet.</p>
       ) : (
-        highlights.map((highlight) => (
-          <button key={highlight.id || highlight.cfi_range} onClick={() => goToCfi(highlight.cfi_range)}>{highlight.highlight_text || highlight.text}</button>
-        ))
+        <div className='highlight-div'>{highlights.map((highlight) => (
+          <button className='highlight-button' key={highlight.id || highlight.cfi_range} onClick={() => goToCfi(highlight.cfi_range)}>
+            <div className='highlight-button-div'>
+            <p className='highlight-text'>"{highlight.highlight_text || highlight.text}"</p>
+            <BiTrash/>
+            </div>
+          </button>
+        ))}</div>
       )
     ) : bottomBarButton === 3 ? (
       // Settings placeholder
