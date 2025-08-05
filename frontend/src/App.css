@@ -23,7 +23,7 @@ body, html, #root {
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: black
+  color: black;
 }
 
 .pages-left-div {

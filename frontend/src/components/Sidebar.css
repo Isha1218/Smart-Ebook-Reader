@@ -219,15 +219,15 @@ ul {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 12px; /* Add some space between text and icon */
+    gap: 12px;
 }
 
 .highlight-text {
     text-align: start;
     font-style: italic;
-    margin: 0; /* Remove default paragraph margins */
-    flex: 1; /* Allow text to take available space */
-    min-width: 0; /* Allow text to shrink below its content size */
-    overflow-wrap: break-word; /* Break long words if needed */
-    word-wrap: break-word; /* Fallback for older browsers */
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
