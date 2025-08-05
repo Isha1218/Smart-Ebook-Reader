@@ -4,17 +4,13 @@ import { BsHighlighter } from "react-icons/bs";
 import { BiMessageDots, BiSend, BiSearch, BiTrash } from "react-icons/bi";
 import './Sidebar.css';
 
-const TopBarModes = {
-  DEFAULT: 0,
-  QA: 1,
-  RECAP: 2,
-  LOOKUP: 3
-};
-
-const BottomBarModes = {
+const ButtonModes = {
   CONTENTS: 1,
   HIGHLIGHTS: 2,
-  SETTINGS: 3
+  SETTINGS: 3,
+  QA: 4,
+  RECAP: 5,
+  LOOKUP: 6
 };
 
 function Sidebar({ 
@@ -29,22 +25,17 @@ function Sidebar({
   handleQA, 
   goToCfi 
 }) {
-  const [topBarMode, setTopBarMode] = useState(TopBarModes.DEFAULT);
-  const [bottomBarMode, setBottomBarMode] = useState(BottomBarModes.CONTENTS);
+  const [currentMode, setCurrentMode] = useState(ButtonModes.CONTENTS);
   const [question, setQuestion] = useState('');
   const [sentQuestion, setSentQuestion] = useState('');
   const [qaResponse, setQAResponse] = useState('');
   const [recapText, setRecapText] = useState('');
   const textareaRef = useRef(null);
 
-  const toggleTopBarMode = (mode) => {
-    setTopBarMode(topBarMode === mode ? TopBarModes.DEFAULT : mode);
-  };
-
   const sendQuestion = async () => {
     if (!question.trim()) return;
     
-    setTopBarMode(topBarMode === TopBarModes.QA ? TopBarModes.DEFAULT : TopBarModes.QA);
+    setCurrentMode(ButtonModes.QA);
     setSentQuestion(question);
     setQuestion('');
     setQAResponse('Loading...');
@@ -59,7 +50,7 @@ function Sidebar({
   };
 
   const onRecapClicked = async () => {
-    setTopBarMode(topBarMode === TopBarModes.RECAP ? TopBarModes.DEFAULT : TopBarModes.RECAP);
+    setCurrentMode(ButtonModes.RECAP);
     setRecapText('Loading...');
     const recap = await handleRecap();
     setRecapText(recap);
@@ -74,7 +65,7 @@ function Sidebar({
 
   useEffect(() => {
     if (lookUpText && lookUpText !== '') {
-      setTopBarMode(TopBarModes.LOOKUP);
+      setCurrentMode(ButtonModes.LOOKUP);
     }
   }, [lookUpText]);
 
@@ -85,9 +76,9 @@ function Sidebar({
     }
   }, [question]);
 
-  const renderTopBarContent = () => {
-    switch (topBarMode) {
-      case TopBarModes.QA:
+  const renderContent = () => {
+    switch (currentMode) {
+      case ButtonModes.QA:
         return sentQuestion !== '' ? (
           <div>
             <div className='question-div'>
@@ -101,7 +92,7 @@ function Sidebar({
           </div>
         );
       
-      case TopBarModes.RECAP:
+      case ButtonModes.RECAP:
         return (
           <div className="recap">
             <p className='recap-title'>Recap</p>
@@ -109,22 +100,15 @@ function Sidebar({
           </div>
         );
       
-      case TopBarModes.LOOKUP:
+      case ButtonModes.LOOKUP:
         return (
           <div className="recap">
             <p className='recap-title'>"{selectedText}"</p>
             <p className='recap-text'>{lookUpText || 'Select text and click "Look Up" to see definitions and explanations here.'}</p>
           </div>
         );
-      
-      default:
-        return renderBottomBarContent();
-    }
-  };
 
-  const renderBottomBarContent = () => {
-    switch (bottomBarMode) {
-      case BottomBarModes.CONTENTS:
+      case ButtonModes.CONTENTS:
         return (
           <ul>
             {chapters.map((item) => (
@@ -148,7 +132,7 @@ function Sidebar({
           </ul>
         );
       
-      case BottomBarModes.HIGHLIGHTS:
+      case ButtonModes.HIGHLIGHTS:
         return highlights.length === 0 ? (
           <p>No highlights yet.</p>
         ) : (
@@ -168,7 +152,7 @@ function Sidebar({
           </div>
         );
       
-      case BottomBarModes.SETTINGS:
+      case ButtonModes.SETTINGS:
         return <p>Settings go here.</p>;
       
       default:
@@ -182,20 +166,20 @@ function Sidebar({
         <button className='library-button'>Library</button>
         <div className='top-right-sidebar'>
           <button 
-            className={topBarMode === TopBarModes.QA ? 'top-right-button-selected' : 'top-right-button'} 
-            onClick={() => toggleTopBarMode(TopBarModes.QA)}
+            className={currentMode === ButtonModes.QA ? 'top-right-button-selected' : 'top-right-button'} 
+            onClick={() => setCurrentMode(ButtonModes.QA)}
           >
             <BiMessageDots />
           </button>
           <button 
-            className={topBarMode === TopBarModes.RECAP ? 'top-right-button-selected' : 'top-right-button'} 
+            className={currentMode === ButtonModes.RECAP ? 'top-right-button-selected' : 'top-right-button'} 
             onClick={onRecapClicked}
           >
             <AiFillBackward />
           </button>
           <button 
-            className={topBarMode === TopBarModes.LOOKUP ? 'top-right-button-selected' : 'top-right-button'} 
-            onClick={() => toggleTopBarMode(TopBarModes.LOOKUP)}
+            className={currentMode === ButtonModes.LOOKUP ? 'top-right-button-selected' : 'top-right-button'} 
+            onClick={() => setCurrentMode(ButtonModes.LOOKUP)}
           >
             <BiSearch />
           </button>
@@ -206,11 +190,11 @@ function Sidebar({
       </div>
 
       <div className='inside-sidebar'>
-        {renderTopBarContent()}
+        {renderContent()}
       </div>
 
       <div className='bottom-sidebar-searchbar'>
-        {topBarMode === TopBarModes.QA && (
+        {currentMode === ButtonModes.QA && (
           <div className='bottom-sidebar-searchbar-send'>
             <textarea
               ref={textareaRef}
@@ -233,22 +217,22 @@ function Sidebar({
 
         <div className='bottom-sidebar'>
           <button 
-            className={bottomBarMode === BottomBarModes.CONTENTS && topBarMode === TopBarModes.DEFAULT ? 'bottom-button-selected' : 'bottom-button'} 
-            onClick={() => setBottomBarMode(BottomBarModes.CONTENTS)}
+            className={currentMode === ButtonModes.CONTENTS ? 'bottom-button-selected' : 'bottom-button'} 
+            onClick={() => setCurrentMode(ButtonModes.CONTENTS)}
           >
             <AiOutlineBars className='bottom-buttons-icon' />
             <p className='bottom-buttons-text'>Contents</p>
           </button>
           <button 
-            className={bottomBarMode === BottomBarModes.HIGHLIGHTS && topBarMode === TopBarModes.DEFAULT ? 'bottom-button-selected' : 'bottom-button'} 
-            onClick={() => setBottomBarMode(BottomBarModes.HIGHLIGHTS)}
+            className={currentMode === ButtonModes.HIGHLIGHTS ? 'bottom-button-selected' : 'bottom-button'} 
+            onClick={() => setCurrentMode(ButtonModes.HIGHLIGHTS)}
           >
             <BsHighlighter className='bottom-buttons-icon' />
             <p className='bottom-buttons-text'>Annotations</p>
           </button>
           <button 
-            className={bottomBarMode === BottomBarModes.SETTINGS && topBarMode === TopBarModes.DEFAULT ? 'bottom-button-selected' : 'bottom-button'} 
-            onClick={() => setBottomBarMode(BottomBarModes.SETTINGS)}
+            className={currentMode === ButtonModes.SETTINGS ? 'bottom-button-selected' : 'bottom-button'} 
+            onClick={() => setCurrentMode(ButtonModes.SETTINGS)}
           >
             <AiOutlineSetting className='bottom-buttons-icon' />
             <p className='bottom-buttons-text'>Settings</p>
@@ -257,6 +241,6 @@ function Sidebar({
       </div>
     </div>
   );
-};
+}
 
 export default Sidebar;

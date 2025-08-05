@@ -6,6 +6,7 @@ body, html, * {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  transition: margin-left 0.3s ease-in-out;
 }
 
 body, html, #root {
@@ -16,22 +17,39 @@ body, html, #root {
 
 .menu-button {
   position: fixed;
-  top: 10px;
-  left: 10px;
+  top: 0.625rem;
+  left: 0.625rem;
   z-index: 1000;
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 1.25rem;
   cursor: pointer;
   color: black;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.menu-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .pages-left-div {
   display: flex;
   justify-content: center;
+  position: fixed;
+  bottom: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
 }
 
 .pages-left {
   color: #A1A1A1;
   z-index: 1001;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1.25rem;
+  font-size: 0.875rem;
+  backdrop-filter: blur(0.625rem);
 }

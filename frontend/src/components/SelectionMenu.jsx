@@ -13,14 +13,14 @@ const SelectionMenu = ({ position, selectedText, onHighlight, onLookup, onClear 
         transform: 'translateX(-50%)',
         background: '#000',
         color: '#fff',
-        borderRadius: '4px',
-        padding: '8px 12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.4)', 
+        borderRadius: '0.25rem',
+        padding: '0.5rem 0.75rem',
+        boxShadow: '0 0.25rem 0.75rem rgba(0,0,0,0.4)', 
         zIndex: 1000,
         display: 'flex',
-        gap: '12px',
-        fontSize: '14px',
-        border: '1px solid #333'
+        gap: '0.75rem',
+        fontSize: '0.875rem',
+        border: '0.0625rem solid #333'
       }}
     >
       <button
@@ -29,10 +29,10 @@ const SelectionMenu = ({ position, selectedText, onHighlight, onLookup, onClear 
           background: 'transparent',
           color: '#fff',
           border: 'none',
-          padding: '4px 8px',
+          padding: '0.25rem 0.5rem',
           cursor: 'pointer',
-          fontSize: '14px',
-          borderRadius: '2px'
+          fontSize: '0.875rem',
+          borderRadius: '0.125rem'
         }}
         onMouseEnter={(e) => e.target.style.background = '#333'}
         onMouseLeave={(e) => e.target.style.background = 'transparent'}
@@ -45,10 +45,10 @@ const SelectionMenu = ({ position, selectedText, onHighlight, onLookup, onClear 
           background: 'transparent',
           color: '#fff',
           border: 'none',
-          padding: '4px 8px',
+          padding: '0.25rem 0.5rem',
           cursor: 'pointer',
-          fontSize: '14px',
-          borderRadius: '2px'
+          fontSize: '0.875rem',
+          borderRadius: '0.125rem'
         }}
         onMouseEnter={(e) => e.target.style.background = '#333'}
         onMouseLeave={(e) => e.target.style.background = 'transparent'}
@@ -61,10 +61,10 @@ const SelectionMenu = ({ position, selectedText, onHighlight, onLookup, onClear 
           background: 'transparent',
           color: '#fff',
           border: 'none',
-          padding: '4px 8px',
+          padding: '0.25rem 0.5rem',
           cursor: 'pointer',
-          fontSize: '14px',
-          borderRadius: '2px'
+          fontSize: '0.875rem',
+          borderRadius: '0.125rem'
         }}
         onMouseEnter={(e) => e.target.style.background = '#333'}
         onMouseLeave={(e) => e.target.style.background = 'transparent'}
