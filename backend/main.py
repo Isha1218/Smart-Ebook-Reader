@@ -36,6 +36,7 @@ class QARequest(BaseModel):
     query: str
     search_text: str
     selected_text: str
+    current_page_text: str
 
 def get_db():
     db = SessionLocal()
@@ -71,5 +72,5 @@ async def find_recap_text(req: RecapRequest):
 
 @app.post("/api/qa")
 async def do_qa(req: QARequest):
-    result = fs.get_open_ended_res(req.query, req.search_text, req.selected_text)
+    result = fs.get_open_ended_res(req.query, req.search_text, req.current_page_text)
     return {"result": result}

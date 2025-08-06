@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { getRecapResponse, getQAResponse, getLookUpResponse } from '../services/textProcessingService';
 
-export const useReaderActions = (renditionRef, selectedText, addNewHighlight, clearSelection) => {
+export const useReaderActions = (renditionRef, selectedText, addNewHighlight, clearSelection, toggleSidebar, currentPageText) => {
   const [lookUpText, setLookUpText] = useState('');
   const [lookUpSelectedText, setLookUpSelectedText] = useState('');
 
@@ -11,6 +11,8 @@ export const useReaderActions = (renditionRef, selectedText, addNewHighlight, cl
 
   const handleQA = useCallback(async (query) => {
     if (!query || !renditionRef.current) return 'No question provided or reader not ready.';
+
+    console.log('in handle qa ' + currentPageText);
     
     try {
       const isSelected = selectedText && selectedText.text;
@@ -24,7 +26,8 @@ export const useReaderActions = (renditionRef, selectedText, addNewHighlight, cl
         renditionRef, 
         selectedTextContent, 
         selectedContainerText, 
-        isSelected
+        isSelected,
+        currentPageText
       );
       
       return qaResponse;
@@ -38,6 +41,7 @@ export const useReaderActions = (renditionRef, selectedText, addNewHighlight, cl
     if (!selectedText) return;
     
     setLookUpSelectedText(selectedText.text);
+    toggleSidebar();
     setLookUpText('Loading...');
     
     const lookUpResponse = await getLookUpResponse(

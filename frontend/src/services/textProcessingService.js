@@ -20,6 +20,80 @@ export const extractTextFromDocument = (doc) => {
   return textContent.replace(/\s+/g, ' ').trim();
 };
 
+// Add the same text extraction logic from useReaderState
+const extractCurrentPageTextDirect = (rendition) => {
+  return new Promise((resolve) => {
+    try {
+      const iframe = rendition.manager.container.querySelector('iframe');
+      if (!iframe) {
+        resolve('');
+        return;
+      }
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc) {
+        resolve('');
+        return;
+      }
+
+      const textElements = Array.from(iframeDoc.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
+      const visibleElements = [];
+
+      // Create intersection observer inside iframe
+      const observer = new (iframe.contentWindow.IntersectionObserver)((entries) => {
+        entries.forEach(entry => {
+          if (entry.intersectionRatio > 0.5) { // At least 50% visible
+            const element = entry.target;
+            const textContent = element.textContent?.trim();
+            if (textContent && !visibleElements.some(el => el.element === element)) {
+              visibleElements.push({
+                element,
+                text: textContent,
+                tagName: element.tagName.toLowerCase()
+              });
+            }
+          }
+        });
+      }, {
+        threshold: [0.1, 0.5, 0.9],
+        root: null // Use viewport as root
+      });
+
+      // Observe all text elements
+      textElements.forEach(el => observer.observe(el));
+
+      // Wait for observations to complete
+      setTimeout(() => {
+        observer.disconnect();
+        
+        // Sort by document order
+        visibleElements.sort((a, b) => {
+          const position = a.element.compareDocumentPosition(b.element);
+          return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+        });
+
+        // Format text based on element types
+        let pageText = '';
+        visibleElements.forEach(({ text, tagName }) => {
+          if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+            pageText += `\n\n${text}\n\n`;
+          } else if (tagName === 'p') {
+            pageText += `${text}\n\n`;
+          } else {
+            pageText += `${text} `;
+          }
+        });
+
+        resolve(pageText.trim());
+      }, 100); // Reduced timeout since we're calling it on-demand
+
+    } catch (error) {
+      console.error('Error extracting page text:', error);
+      resolve('');
+    }
+  });
+};
+
 export const getPreviousChapters = async (rendition, spine, previousChapterIndex) => {
   let previousChaptersText = '';
   while (previousChapterIndex >= 0 && previousChaptersText.length <= 100) {
@@ -51,7 +125,20 @@ export const getQAResponse = async (query, renditionRef, selectedText, selectedC
   
   let contextText = await getAllPreviousChapters(rendition, spine, currentIndex - 1);
 
-  console.log('curr page text ' + currentPageText);
+  // Extract fresh current page text directly
+  let freshCurrentPageText;
+  try {
+    freshCurrentPageText = await extractCurrentPageTextDirect(rendition);
+    console.log('Fresh current page text extracted:', {
+      length: freshCurrentPageText.length,
+      preview: freshCurrentPageText.substring(0, 100) + '...'
+    });
+  } catch (error) {
+    console.error('Failed to extract fresh page text, using fallback:', error);
+    freshCurrentPageText = currentPageText; // Fallback to passed parameter
+  }
+
+  console.log('Using current page text:', freshCurrentPageText);
 
   if (isSelected) {
     const currentSection = await rendition.book.load(spine[currentIndex].href);
@@ -70,7 +157,7 @@ export const getQAResponse = async (query, renditionRef, selectedText, selectedC
     contextText = index === -1 ? contextText : contextText + chapterText.slice(0, index);
   }
   
-  const qaResponse = await doQA(query, contextText, selectedText);
+  const qaResponse = await doQA(query, contextText, selectedText, freshCurrentPageText);
   console.log(qaResponse);
   return qaResponse;
 };

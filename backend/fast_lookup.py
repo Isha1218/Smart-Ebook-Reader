@@ -19,9 +19,10 @@ class FastLookup:
         )
         self.embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    def get_open_ended_res(self, query, previous_read, highlighted_text):
+    def get_open_ended_res(self, query, previous_read, current_page_text):
         prompt_template_open_ended = ChatPromptTemplate.from_template(OPEN_ENDED_TEMPLATE)
-        prompt_open_ended = prompt_template_open_ended.format(context=previous_read, query=query)
+        prompt_open_ended = prompt_template_open_ended.format(context=previous_read, query=query, current_page_text=current_page_text)
+        print('this is the current page ' + current_page_text)
         response_open_ended = self.model.generate_content(
                 prompt_open_ended,
                 generation_config=genai.types.GenerationConfig(

@@ -14,15 +14,33 @@ import './App.css';
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [location, setLocation] = useState(0);
+  // Add state for current page text in App component
+  const [currentPageText, setCurrentPageText] = useState('');
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen(prev => !prev);
+  }, []);
   
   const {
     renditionRef,
     chapters,
     currentPage,
+    currentPageText: hookPageText, // Get the page text from hook
     handleTocChanged,
     handleLocationChanged,
     handleGetRendition
   } = useReaderState();
+
+  // Update App's state when hook's page text changes
+  React.useEffect(() => {
+    if (hookPageText !== currentPageText) {
+      setCurrentPageText(hookPageText);
+      console.log('App.jsx - Page text updated:', {
+        length: hookPageText.length,
+        preview: hookPageText.substring(0, 100) + '...'
+      });
+    }
+  }, [hookPageText, currentPageText]);
 
   const {
     highlights,
@@ -43,11 +61,7 @@ function App() {
     handleQA,
     handleLookup,
     handleHighlight
-  } = useReaderActions(renditionRef, selectedText, addNewHighlight, clearSelection);
-
-  const toggleSidebar = useCallback(() => {
-    setIsSidebarOpen(prev => !prev);
-  }, []);
+  } = useReaderActions(renditionRef, selectedText, addNewHighlight, clearSelection, toggleSidebar, currentPageText);
 
   const goToChapter = useCallback((cfi) => {
     setLocation(cfi);
@@ -56,6 +70,18 @@ function App() {
   const onGetRendition = useCallback((rendition) => {
     handleGetRendition(rendition, applyHighlights, clearSelection);
   }, [handleGetRendition, applyHighlights, clearSelection]);
+
+  // Example function to demonstrate using the current page text
+  const handleAnalyzeCurrentPage = useCallback(() => {
+    if (currentPageText) {
+      console.log('Analyzing current page text:', {
+        wordCount: currentPageText.split(' ').length,
+        charCount: currentPageText.length,
+        text: currentPageText
+      });
+      // You can now use currentPageText for AI analysis, summarization, etc.
+    }
+  }, [currentPageText]);
 
   return (
     <div className="app-container">
@@ -103,6 +129,7 @@ function App() {
         selectedText={lookUpSelectedText}
         handleQA={handleQA}
         goToCfi={goToChapter}
+        currentPageText={currentPageText}
       />
     </div>
   );

@@ -60,7 +60,8 @@ export const fastLookup = async (query, searchText) => {
   }
 };
 
-export const doQA = async (query, searchText, selectedText) => {
+export const doQA = async (query, searchText, selectedText, currentPageText) => {
+  console.log('this is the current page text ' + currentPageText)
   try {
     const response = await fetch(`${API_BASE_URL}/qa`, {
       method: 'POST',
@@ -70,7 +71,8 @@ export const doQA = async (query, searchText, selectedText) => {
       body: JSON.stringify({
         query: query,
         search_text: searchText,
-        selected_text: selectedText
+        selected_text: selectedText,
+        current_page_text: currentPageText
       })
     });
 
