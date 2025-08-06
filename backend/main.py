@@ -25,6 +25,9 @@ class HighlightBase(BaseModel):
     cfi_range: str
     chapter: str
 
+class DeleteHighlightRequest(BaseModel):
+    id: str
+
 class LookupRequest(BaseModel):
     query: str
     search_text: str
@@ -54,11 +57,17 @@ async def add_highlight(data: HighlightBase, db: Session = Depends(get_db)):
     db.refresh(new_highlight)
     return new_highlight
 
+@app.post("/delete_highlight")
+async def remove_highlight(request: DeleteHighlightRequest, db: Session = Depends(get_db)):
+    highlight = db.query(models.Highlight).filter(models.Highlight.id == request.id).first()
+    db.delete(highlight)
+    db.commit()
+    return {"message": "Highlight deleted successfully"}
+
 @app.get("/highlights", response_model=List[HighlightBase])
 async def get_highlights(db: Session = Depends(get_db)):
     highlights = db.query(models.Highlight).all()
     return highlights
-
 
 @app.post("/api/fast_lookup")
 async def do_fast_lookup(req: LookupRequest):

@@ -45,7 +45,8 @@ function App() {
   const {
     highlights,
     applyHighlights,
-    addNewHighlight
+    addNewHighlight,
+    deleteExistingHighlight
   } = useHighlights(renditionRef, location);
 
   const {
@@ -130,6 +131,7 @@ function App() {
         handleQA={handleQA}
         goToCfi={goToChapter}
         currentPageText={currentPageText}
+        deleteHighlight={deleteExistingHighlight}
       />
     </div>
   );

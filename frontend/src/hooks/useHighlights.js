@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchHighlights, addHighlight } from '../services/apiService';
+import { fetchHighlights, addHighlight, deleteHighlight } from '../services/apiService';
 
 export const useHighlights = (renditionRef, location) => {
   const [highlights, setHighlights] = useState([]);
@@ -58,6 +58,15 @@ export const useHighlights = (renditionRef, location) => {
     }
   }, [location, applyHighlights]);
 
+  const deleteExistingHighlight = useCallback(async (highlightId) => {
+    try {
+      setHighlights(prev => prev.filter(h => h.id !== highlightId));
+      await deleteHighlight(highlightId);
+    } catch (error) {
+      console.error('Failed to delete highlight:', error);
+    }
+  }, []);  
+
   const addNewHighlight = useCallback(async (selectedText) => {
     if (!selectedText || !renditionRef.current) return;
 
@@ -82,6 +91,7 @@ export const useHighlights = (renditionRef, location) => {
   return {
     highlights,
     applyHighlights,
-    addNewHighlight
+    addNewHighlight,
+    deleteExistingHighlight
   };
 };

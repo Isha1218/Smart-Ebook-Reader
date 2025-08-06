@@ -23,7 +23,8 @@ function Sidebar({
   lookUpText, 
   selectedText, 
   handleQA, 
-  goToCfi 
+  goToCfi,
+  deleteHighlight
 }) {
   const [currentMode, setCurrentMode] = useState(ButtonModes.CONTENTS);
   const [question, setQuestion] = useState('');
@@ -145,7 +146,7 @@ function Sidebar({
               >
                 <div className='highlight-button-div'>
                   <p className='highlight-text'>"{highlight.highlight_text || highlight.text}"</p>
-                  <BiTrash/>
+                  <button className='delete-highlight-button' onClick={() => deleteHighlight(highlight.id)}><BiTrash/></button>
                 </div>
               </button>
             ))}

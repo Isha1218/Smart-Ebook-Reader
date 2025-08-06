@@ -1,5 +1,25 @@
 const API_BASE_URL = 'http://192.168.0.19:5000/api';
 
+export const deleteHighlight = async (id) => {
+  try {
+    const response = await fetch('http://192.168.0.19:5000/delete_highlight', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: id
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error deleting highlight:', error);
+    throw error;
+  }
+}
+
 export const addHighlight = async (id, highlightText, cfiRange, chapter) => {
   try {
     const response = await fetch('http://192.168.0.19:5000/add_highlight', {
