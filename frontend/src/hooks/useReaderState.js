@@ -1,4 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
+import { extractCurrentPageText } from '../utils/textExtraction';
+
+const EXTRACTION_DELAY = 300;
 
 export const useReaderState = () => {
   const [chapters, setChapters] = useState([]);
@@ -6,78 +9,30 @@ export const useReaderState = () => {
   const [currentPageText, setCurrentPageText] = useState('');
   const renditionRef = useRef(null);
 
-  // Extract text using Intersection Observer for precise visible text detection
-  const extractCurrentPageText = useCallback((rendition) => {
-    return new Promise((resolve) => {
-      try {
-        const iframe = rendition.manager.container.querySelector('iframe');
-        if (!iframe) {
-          resolve('');
-          return;
-        }
-
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        if (!iframeDoc) {
-          resolve('');
-          return;
-        }
-
-        const textElements = Array.from(iframeDoc.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
-        const visibleElements = [];
-
-        // Create intersection observer inside iframe
-        const observer = new (iframe.contentWindow.IntersectionObserver)((entries) => {
-          entries.forEach(entry => {
-            if (entry.intersectionRatio > 0.5) { // At least 50% visible
-              const element = entry.target;
-              const textContent = element.textContent?.trim();
-              if (textContent && !visibleElements.some(el => el.element === element)) {
-                visibleElements.push({
-                  element,
-                  text: textContent,
-                  tagName: element.tagName.toLowerCase()
-                });
-              }
-            }
-          });
-        }, {
-          threshold: [0.1, 0.5, 0.9],
-          root: null // Use viewport as root
-        });
-
-        // Observe all text elements
-        textElements.forEach(el => observer.observe(el));
-
-        // Wait for observations to complete
-        setTimeout(() => {
-          observer.disconnect();
-          
-          // Sort by document order
-          visibleElements.sort((a, b) => {
-            const position = a.element.compareDocumentPosition(b.element);
-            return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-          });
-
-          // Format text based on element types
-          let pageText = '';
-          visibleElements.forEach(({ text, tagName }) => {
-            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
-              pageText += `\n\n${text}\n\n`;
-            } else if (tagName === 'p') {
-              pageText += `${text}\n\n`;
-            } else {
-              pageText += `${text} `;
-            }
-          });
-
-          resolve(pageText.trim());
-        }, 300);
-
-      } catch (error) {
-        console.error('Error extracting page text:', error);
-        resolve('');
-      }
-    });
+  const updatePageText = useCallback(async (epubcifi) => {
+    if (!renditionRef.current) return;
+    
+    try {
+      setTimeout(async () => {
+        const pageText = await extractCurrentPageText(renditionRef.current);
+        setCurrentPageText(pageText);
+        
+        console.log('=== Current Page Text ===');
+        console.log(`Length: ${pageText.length} characters`);
+        console.log(pageText);
+        console.log('=== End Page Text ===');
+        
+        window.dispatchEvent(new CustomEvent('pageTextExtracted', { 
+          detail: { 
+            text: pageText,
+            cfi: epubcifi,
+            pageInfo: renditionRef.current.location?.start?.displayed
+          }
+        }));
+      }, EXTRACTION_DELAY);
+    } catch (error) {
+      console.error('Error during text extraction:', error);
+    }
   }, []);
 
   const handleTocChanged = useCallback((toc) => {
@@ -85,59 +40,20 @@ export const useReaderState = () => {
   }, []);
 
   const handleLocationChanged = useCallback(async (epubcifi) => {
-    if (renditionRef.current) {
-      // Update page info
-      const { start } = renditionRef.current.location;
-      if (start && start.displayed) {
-        const { page, total } = start.displayed;
-        const pagesLeft = total - page;
-        setCurrentPage(`${pagesLeft} page${pagesLeft !== 1 ? 's' : ''} left`);
-      }
+    if (!renditionRef.current) return;
 
-      // Extract current page text
-      try {
-        setTimeout(async () => {
-          const pageText = await extractCurrentPageText(renditionRef.current);
-          setCurrentPageText(pageText);
-          
-          // Optional: Log the extracted text
-          console.log('=== Current Page Text ===');
-          console.log(`Length: ${pageText.length} characters`);
-          console.log(pageText);
-          console.log('=== End Page Text ===');
-          
-          // Dispatch event for other components
-          window.dispatchEvent(new CustomEvent('pageTextExtracted', { 
-            detail: { 
-              text: pageText,
-              cfi: epubcifi,
-              pageInfo: start?.displayed 
-            }
-          }));
-        }, 300);
-      } catch (error) {
-        console.error('Error during text extraction:', error);
-      }
+    const { start } = renditionRef.current.location;
+    if (start?.displayed) {
+      const { page, total } = start.displayed;
+      const pagesLeft = total - page;
+      setCurrentPage(`${pagesLeft} page${pagesLeft !== 1 ? 's' : ''} left`);
     }
-  }, [extractCurrentPageText]);
 
-  const handleGetRendition = useCallback((rendition, applyHighlights, clearSelection) => {
-    renditionRef.current = rendition;
-    renditionRef.current.themes.fontSize('180%');
-    
-    applyHighlights();
+    updatePageText(epubcifi);
+  }, [updatePageText]);
 
-    // Extract initial page text
-    setTimeout(async () => {
-      const initialPageText = await extractCurrentPageText(rendition);
-      setCurrentPageText(initialPageText);
-      console.log('=== Initial Page Text ===');
-      console.log(initialPageText);
-      console.log('=== End Initial Page Text ===');
-    }, 500);
-
-    // Handle text selection
-    renditionRef.current.on('selected', (cfiRange, contents) => {
+  const setupEventHandlers = useCallback((rendition, applyHighlights, clearSelection) => {
+    rendition.on('selected', (cfiRange, contents) => {
       try {
         const selection = contents.window.getSelection();
         const selectedTextContent = selection.toString().trim();
@@ -145,8 +61,8 @@ export const useReaderState = () => {
         if (selectedTextContent.length > 0) {
           const range = selection.getRangeAt(0);
           const rect = range.getBoundingClientRect();
-          const iframe = renditionRef.current.manager.container.querySelector('iframe');
-          const iframeRect = iframe ? iframe.getBoundingClientRect() : { left: 0, top: 0 };
+          const iframe = rendition.manager.container.querySelector('iframe');
+          const iframeRect = iframe?.getBoundingClientRect() || { left: 0, top: 0 };
           
           const selectedTextData = {
             text: selectedTextContent,
@@ -168,24 +84,37 @@ export const useReaderState = () => {
       }
     });
 
-    renditionRef.current.on('clicked', () => {
-      clearSelection();
-    });
+    rendition.on('clicked', clearSelection);
 
-    // Handle page navigation
-    renditionRef.current.on('relocated', async (location) => {
+    rendition.on('relocated', async () => {
       try {
         setTimeout(async () => {
-          const pageText = await extractCurrentPageText(renditionRef.current);
+          const pageText = await extractCurrentPageText(rendition);
           setCurrentPageText(pageText);
           console.log('=== Page Changed ===');
           console.log(`New page text (${pageText.length} chars):`, pageText);
-        }, 300);
+        }, EXTRACTION_DELAY);
       } catch (error) {
         console.error('Error extracting text on relocated:', error);
       }
     });
-  }, [extractCurrentPageText]);
+  }, []);
+
+  const handleGetRendition = useCallback((rendition, applyHighlights, clearSelection) => {
+    renditionRef.current = rendition;
+    rendition.themes.fontSize('180%');
+    
+    applyHighlights();
+    setupEventHandlers(rendition, applyHighlights, clearSelection);
+
+    setTimeout(async () => {
+      const initialPageText = await extractCurrentPageText(rendition);
+      setCurrentPageText(initialPageText);
+      console.log('=== Initial Page Text ===');
+      console.log(initialPageText);
+      console.log('=== End Initial Page Text ===');
+    }, 500);
+  }, [setupEventHandlers]);
 
   return {
     renditionRef,
@@ -194,7 +123,6 @@ export const useReaderState = () => {
     currentPageText,
     handleTocChanged,
     handleLocationChanged,
-    handleGetRendition,
-    extractCurrentPageText // Expose for manual use if needed
+    handleGetRendition
   };
 };

@@ -4,23 +4,16 @@ import { fetchHighlights, addHighlight, deleteHighlight } from '../services/apiS
 export const useHighlights = (renditionRef, location) => {
   const [highlights, setHighlights] = useState([]);
 
-  useEffect(() => {
-    async function loadHighlights() {
-      try {
-        const dbHighlights = await fetchHighlights();
-        setHighlights(dbHighlights);
-      } catch (err) {
-        console.error('Error loading highlights:', err);
-      }
+  const loadHighlights = async () => {
+    try {
+      const dbHighlights = await fetchHighlights();
+      setHighlights(dbHighlights);
+    } catch (err) {
+      console.error('Error loading highlights:', err);
     }
-    loadHighlights();
-  }, []);
+  };
 
-  const applyHighlights = useCallback(() => {
-    if (!renditionRef.current || !highlights) return;
-  
-    const rendition = renditionRef.current;
-  
+  const clearPreviousHighlights = (rendition) => {
     try {
       Object.values(rendition.annotations._annotations).forEach((annotation) => {
         if (annotation.type === 'highlight') {
@@ -30,15 +23,20 @@ export const useHighlights = (renditionRef, location) => {
     } catch (error) {
       console.warn('Failed to clear previous highlights:', error);
     }
+  };
+
+  const applyHighlights = useCallback(() => {
+    if (!renditionRef.current || !highlights) return;
+  
+    const rendition = renditionRef.current;
+    clearPreviousHighlights(rendition);
   
     highlights.forEach(highlight => {
       try {
         rendition.annotations.highlight(
           highlight.cfi_range,
           {},
-          (e) => {
-            console.log('Highlight clicked:', e);
-          },
+          (e) => console.log('Highlight clicked:', e),
           undefined,
           {
             fill: 'yellow',
@@ -52,27 +50,11 @@ export const useHighlights = (renditionRef, location) => {
     });
   }, [highlights, renditionRef]);
 
-  useEffect(() => {
-    if (renditionRef.current) {
-      applyHighlights();
-    }
-  }, [location, applyHighlights]);
-
-  const deleteExistingHighlight = useCallback(async (highlightId) => {
-    try {
-      setHighlights(prev => prev.filter(h => h.id !== highlightId));
-      await deleteHighlight(highlightId);
-    } catch (error) {
-      console.error('Failed to delete highlight:', error);
-    }
-  }, []);  
-
   const addNewHighlight = useCallback(async (selectedText) => {
     if (!selectedText || !renditionRef.current) return;
 
     try {
       const highlightId = `highlight-${Date.now()}`;
-      
       const newHighlight = {
         id: highlightId,
         text: selectedText.text,
@@ -81,12 +63,30 @@ export const useHighlights = (renditionRef, location) => {
       };
 
       setHighlights(prev => [...prev, newHighlight]);
-      
       await addHighlight(highlightId, selectedText.text, selectedText.cfiRange, 'Chapter 1');
     } catch (error) {
       console.error('Error creating highlight:', error);
     }
   }, [renditionRef]);
+
+  const deleteExistingHighlight = useCallback(async (highlightId) => {
+    try {
+      setHighlights(prev => prev.filter(h => h.id !== highlightId));
+      await deleteHighlight(highlightId);
+    } catch (error) {
+      console.error('Failed to delete highlight:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadHighlights();
+  }, []);
+
+  useEffect(() => {
+    if (renditionRef.current) {
+      applyHighlights();
+    }
+  }, [location, applyHighlights]);
 
   return {
     highlights,

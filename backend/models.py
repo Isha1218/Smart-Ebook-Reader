@@ -1,4 +1,3 @@
-# models.py
 from sqlalchemy import Column, Integer, Text, Date, String
 from database import Base
 from datetime import date

@@ -4,7 +4,7 @@ import { BsHighlighter, BsMoon, BsSun } from "react-icons/bs";
 import { BiMessageDots, BiSend, BiSearch, BiTrash, BiPlus, BiMinus } from "react-icons/bi";
 import './Sidebar.css';
 
-const ButtonModes = {
+const MODES = {
   CONTENTS: 1,
   HIGHLIGHTS: 2,
   SETTINGS: 3,
@@ -13,6 +13,8 @@ const ButtonModes = {
   LOOKUP: 6
 };
 
+const FONT_LIMITS = { MIN: 10, MAX: 60, DEFAULT: 16, STEP: 2 };
+
 function Sidebar({ 
   isOpen, 
   toggleSidebar, 
@@ -20,7 +22,7 @@ function Sidebar({
   goToChapter, 
   handleRecap, 
   highlights, 
-  lookUpText, 
+  lookupText, 
   selectedText, 
   handleQA, 
   goToCfi,
@@ -30,18 +32,25 @@ function Sidebar({
   fontSize,
   setFontSize
 }) {
-  const [currentMode, setCurrentMode] = useState(ButtonModes.CONTENTS);
+  const [currentMode, setCurrentMode] = useState(MODES.CONTENTS);
   const [question, setQuestion] = useState('');
-  const [sentQuestion, setSentQuestion] = useState('');
+  const [submittedQuestion, setSubmittedQuestion] = useState('');
   const [qaResponse, setQAResponse] = useState('');
-  const [recapText, setRecapText] = useState('');
+  const [recapContent, setRecapContent] = useState('');
   const textareaRef = useRef(null);
 
-  const sendQuestion = async () => {
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  const submitQuestion = async () => {
     if (!question.trim()) return;
     
-    setCurrentMode(ButtonModes.QA);
-    setSentQuestion(question);
+    setCurrentMode(MODES.QA);
+    setSubmittedQuestion(question);
     setQuestion('');
     setQAResponse('Loading...');
     
@@ -54,177 +63,175 @@ function Sidebar({
     }
   };
 
-  const onRecapClicked = async () => {
-    setCurrentMode(ButtonModes.RECAP);
-    setRecapText('Loading...');
+  const loadRecap = async () => {
+    setCurrentMode(MODES.RECAP);
+    setRecapContent('Loading...');
     const recap = await handleRecap();
-    setRecapText(recap);
+    setRecapContent(recap);
   };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendQuestion();
+      submitQuestion();
     }
   };
 
-  const increaseFontSize = () => {
-    setFontSize(prev => Math.min(prev + 2, 60)); // Max font size of 24px
+  const adjustFontSize = (direction) => {
+    const change = direction === 'increase' ? FONT_LIMITS.STEP : -FONT_LIMITS.STEP;
+    setFontSize(prev => Math.max(FONT_LIMITS.MIN, Math.min(FONT_LIMITS.MAX, prev + change)));
   };
 
-  const decreaseFontSize = () => {
-    setFontSize(prev => Math.max(prev - 2, 10)); // Min font size of 10px
-  };
+  const renderChapterList = () => (
+    <ul>
+      {chapters.map((item) => (
+        <li key={item.id}>
+          <button onClick={() => goToChapter(item.href)} className="chapter-button">
+            {item.label}
+          </button>
+          {item.subitems?.length > 0 && (
+            <ul className='subchapter-list'>
+              {item.subitems.map((subitem) => (
+                <li className='subchapter' key={subitem.id}>
+                  <button onClick={() => goToChapter(subitem.href)} className="subchapter-button">
+                    {subitem.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
 
-  const resetFontSize = () => {
-    setFontSize(16); // Reset to default
-  };
+  const renderHighlightsList = () => (
+    highlights.length === 0 ? (
+      <p>No highlights yet.</p>
+    ) : (
+      <div className='highlight-div'>
+        {highlights.map((highlight) => (
+          <button 
+            className='highlight-button' 
+            key={highlight.id || highlight.cfi_range} 
+            onClick={() => goToCfi(highlight.cfi_range)}
+          >
+            <div className='highlight-button-div'>
+              <p className='highlight-text'>"{highlight.highlight_text || highlight.text}"</p>
+              <button 
+                className='delete-highlight-button' 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteHighlight(highlight.id);
+                }}
+              >
+                <BiTrash/>
+              </button>
+            </div>
+          </button>
+        ))}
+      </div>
+    )
+  );
 
-  useEffect(() => {
-    if (lookUpText && lookUpText !== '') {
-      setCurrentMode(ButtonModes.LOOKUP);
-    }
-  }, [lookUpText]);
+  const renderQASection = () => (
+    submittedQuestion ? (
+      <div>
+        <div className='question-div'>
+          <p>{submittedQuestion}</p>
+        </div>
+        <p className='recap-text'>{qaResponse}</p>
+      </div>
+    ) : (
+      <div>
+        <p className='recap-text'>Ask any question about the book, and I'll answer based on what you've read so far.</p>
+      </div>
+    )
+  );
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [question]);
+  const renderSettings = () => (
+    <div className="settings-container">
+      <h3 className="settings-title">Settings</h3>
+      
+      <div className="setting-item">
+        <div className="setting-label">
+          <span className="setting-text">Theme</span>
+        </div>
+        <button 
+          className={`theme-toggle ${isDarkMode ? 'dark' : 'light'}`}
+          onClick={toggleDarkMode}
+        >
+          <div className="theme-toggle-track">
+            <div className="theme-toggle-thumb">
+              {isDarkMode ? <BsMoon size={12} /> : <BsSun size={12} />}
+            </div>
+          </div>
+          <span className="theme-label">
+            {isDarkMode ? 'Dark' : 'Light'}
+          </span>
+        </button>
+      </div>
+
+      <div className="setting-item">
+        <div className="setting-label">
+          <span className="setting-text">Font Size</span>
+          <span className="font-size-display">{fontSize}px</span>
+        </div>
+        <div className="font-size-controls">
+          <button 
+            className="font-control-btn" 
+            onClick={() => adjustFontSize('decrease')}
+            disabled={fontSize <= FONT_LIMITS.MIN}
+          >
+            <BiMinus size={20} />
+          </button>
+          <button 
+            className="font-control-btn" 
+            onClick={() => adjustFontSize('increase')}
+            disabled={fontSize >= FONT_LIMITS.MAX}
+          >
+            <BiPlus size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   const renderContent = () => {
     switch (currentMode) {
-      case ButtonModes.QA:
-        return sentQuestion !== '' ? (
-          <div>
-            <div className='question-div'>
-              <p>{sentQuestion}</p>
-            </div>
-            <p className='recap-text'>{qaResponse}</p>
-          </div>
-        ) : (
-          <div>
-            <p className='recap-text'>Ask any question about the book, and I'll answer based on what you've read so far.</p>
-          </div>
-        );
-      
-      case ButtonModes.RECAP:
+      case MODES.QA: return renderQASection();
+      case MODES.RECAP: 
         return (
           <div className="recap">
             <p className='recap-title'>Recap</p>
-            <p className='recap-text'>{recapText}</p>
+            <p className='recap-text'>{recapContent}</p>
           </div>
         );
-      
-      case ButtonModes.LOOKUP:
+      case MODES.LOOKUP:
         return (
           <div className="recap">
             <p className='recap-title'>
-              {selectedText === '' ? '' : `"${selectedText}"`}
+              {selectedText ? `"${selectedText}"` : ''}
             </p>
-            <p className='recap-text'>{lookUpText || 'Select text and click "Look Up" to see definitions and explanations here.'}</p>
+            <p className='recap-text'>
+              {lookupText || 'Select text and click "Look Up" to see definitions and explanations here.'}
+            </p>
           </div>
         );
-
-      case ButtonModes.CONTENTS:
-        return (
-          <ul>
-            {chapters.map((item) => (
-              <li key={item.id}>
-                <button onClick={() => goToChapter(item.href)} className="chapter-button">
-                  {item.label}
-                </button>
-                {item.subitems?.length > 0 && (
-                  <ul className='subchapter-list'>
-                    {item.subitems.map((subitem) => (
-                      <li className='subchapter' key={subitem.id}>
-                        <button onClick={() => goToChapter(subitem.href)} className="subchapter-button">
-                          {subitem.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        );
-      
-      case ButtonModes.HIGHLIGHTS:
-        return highlights.length === 0 ? (
-          <p>No highlights yet.</p>
-        ) : (
-          <div className='highlight-div'>
-            {highlights.map((highlight) => (
-              <button 
-                className='highlight-button' 
-                key={highlight.id || highlight.cfi_range} 
-                onClick={() => goToCfi(highlight.cfi_range)}
-              >
-                <div className='highlight-button-div'>
-                  <p className='highlight-text'>"{highlight.highlight_text || highlight.text}"</p>
-                  <button className='delete-highlight-button' onClick={() => deleteHighlight(highlight.id)}><BiTrash/></button>
-                </div>
-              </button>
-            ))}
-          </div>
-        );
-      
-      case ButtonModes.SETTINGS:
-        return (
-          <div className="settings-container">
-            <h3 className="settings-title">Settings</h3>
-            
-            <div className="setting-item">
-              <div className="setting-label">
-                <span className="setting-text">Theme</span>
-              </div>
-              <button 
-                className={`theme-toggle ${isDarkMode ? 'dark' : 'light'}`}
-                onClick={toggleDarkMode}
-              >
-                <div className="theme-toggle-track">
-                  <div className="theme-toggle-thumb">
-                    {isDarkMode ? <BsMoon size={12} /> : <BsSun size={12} />}
-                  </div>
-                </div>
-                <span className="theme-label">
-                  {isDarkMode ? 'Dark' : 'Light'}
-                </span>
-              </button>
-            </div>
-
-            {/* Font Size Controls */}
-            <div className="setting-item">
-              <div className="setting-label">
-                <span className="setting-text">Font Size</span>
-                <span className="font-size-display">{fontSize}px</span>
-              </div>
-              <div className="font-size-controls">
-                <button 
-                  className="font-control-btn" 
-                  onClick={decreaseFontSize}
-                  disabled={fontSize <= 10}
-                >
-                  <BiMinus size={20} />
-                </button>
-                <button 
-                  className="font-control-btn" 
-                  onClick={increaseFontSize}
-                  disabled={fontSize >= 60}
-                >
-                  <BiPlus size={20} />
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      
-      default:
-        return <p>Select a tab.</p>;
+      case MODES.CONTENTS: return renderChapterList();
+      case MODES.HIGHLIGHTS: return renderHighlightsList();
+      case MODES.SETTINGS: return renderSettings();
+      default: return <p>Select a tab.</p>;
     }
   };
+
+  useEffect(() => {
+    if (lookupText && lookupText !== '') {
+      setCurrentMode(MODES.LOOKUP);
+    }
+  }, [lookupText]);
+
+  useEffect(adjustTextareaHeight, [question]);
 
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -232,20 +239,20 @@ function Sidebar({
         <button className='library-button'>Library</button>
         <div className='top-right-sidebar'>
           <button 
-            className={currentMode === ButtonModes.QA ? 'top-right-button-selected' : 'top-right-button'} 
-            onClick={() => setCurrentMode(ButtonModes.QA)}
+            className={currentMode === MODES.QA ? 'top-right-button-selected' : 'top-right-button'} 
+            onClick={() => setCurrentMode(MODES.QA)}
           >
             <BiMessageDots />
           </button>
           <button 
-            className={currentMode === ButtonModes.RECAP ? 'top-right-button-selected' : 'top-right-button'} 
-            onClick={onRecapClicked}
+            className={currentMode === MODES.RECAP ? 'top-right-button-selected' : 'top-right-button'} 
+            onClick={loadRecap}
           >
             <AiFillBackward />
           </button>
           <button 
-            className={currentMode === ButtonModes.LOOKUP ? 'top-right-button-selected' : 'top-right-button'} 
-            onClick={() => setCurrentMode(ButtonModes.LOOKUP)}
+            className={currentMode === MODES.LOOKUP ? 'top-right-button-selected' : 'top-right-button'} 
+            onClick={() => setCurrentMode(MODES.LOOKUP)}
           >
             <BiSearch />
           </button>
@@ -260,7 +267,7 @@ function Sidebar({
       </div>
 
       <div className='bottom-sidebar-searchbar'>
-        {currentMode === ButtonModes.QA && (
+        {currentMode === MODES.QA && (
           <div className='bottom-sidebar-searchbar-send'>
             <textarea
               ref={textareaRef}
@@ -273,7 +280,7 @@ function Sidebar({
             />
             <button 
               className='send-button' 
-              onClick={sendQuestion}
+              onClick={submitQuestion}
               disabled={!question.trim()}
             >
               <BiSend size={'20px'} color='black' />
@@ -283,22 +290,22 @@ function Sidebar({
 
         <div className='bottom-sidebar'>
           <button 
-            className={currentMode === ButtonModes.CONTENTS ? 'bottom-button-selected' : 'bottom-button'} 
-            onClick={() => setCurrentMode(ButtonModes.CONTENTS)}
+            className={currentMode === MODES.CONTENTS ? 'bottom-button-selected' : 'bottom-button'} 
+            onClick={() => setCurrentMode(MODES.CONTENTS)}
           >
             <AiOutlineBars className='bottom-buttons-icon' />
             <p className='bottom-buttons-text'>Contents</p>
           </button>
           <button 
-            className={currentMode === ButtonModes.HIGHLIGHTS ? 'bottom-button-selected' : 'bottom-button'} 
-            onClick={() => setCurrentMode(ButtonModes.HIGHLIGHTS)}
+            className={currentMode === MODES.HIGHLIGHTS ? 'bottom-button-selected' : 'bottom-button'} 
+            onClick={() => setCurrentMode(MODES.HIGHLIGHTS)}
           >
             <BsHighlighter className='bottom-buttons-icon' />
             <p className='bottom-buttons-text'>Annotations</p>
           </button>
           <button 
-            className={currentMode === ButtonModes.SETTINGS ? 'bottom-button-selected' : 'bottom-button'} 
-            onClick={() => setCurrentMode(ButtonModes.SETTINGS)}
+            className={currentMode === MODES.SETTINGS ? 'bottom-button-selected' : 'bottom-button'} 
+            onClick={() => setCurrentMode(MODES.SETTINGS)}
           >
             <AiOutlineSetting className='bottom-buttons-icon' />
             <p className='bottom-buttons-text'>Settings</p>

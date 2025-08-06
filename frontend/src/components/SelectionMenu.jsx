@@ -3,6 +3,19 @@ import React from 'react';
 const SelectionMenu = ({ position, selectedText, onHighlight, onLookup, onClear }) => {
   if (!position || !selectedText) return null;
 
+  const buttonStyle = {
+    background: 'transparent',
+    color: '#fff',
+    border: 'none',
+    padding: '0.25rem 0.5rem',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    borderRadius: '0.125rem'
+  };
+
+  const handleMouseEnter = (e) => e.target.style.background = '#333';
+  const handleMouseLeave = (e) => e.target.style.background = 'transparent';
+
   return (
     <div 
       className="selection-menu"
@@ -25,49 +38,25 @@ const SelectionMenu = ({ position, selectedText, onHighlight, onLookup, onClear 
     >
       <button
         onClick={onHighlight}
-        style={{
-          background: 'transparent',
-          color: '#fff',
-          border: 'none',
-          padding: '0.25rem 0.5rem',
-          cursor: 'pointer',
-          fontSize: '0.875rem',
-          borderRadius: '0.125rem'
-        }}
-        onMouseEnter={(e) => e.target.style.background = '#333'}
-        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+        style={buttonStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         Highlight
       </button>
       <button
         onClick={onLookup}
-        style={{
-          background: 'transparent',
-          color: '#fff',
-          border: 'none',
-          padding: '0.25rem 0.5rem',
-          cursor: 'pointer',
-          fontSize: '0.875rem',
-          borderRadius: '0.125rem'
-        }}
-        onMouseEnter={(e) => e.target.style.background = '#333'}
-        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+        style={buttonStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         Look Up
       </button>
       <button
         onClick={onClear}
-        style={{
-          background: 'transparent',
-          color: '#fff',
-          border: 'none',
-          padding: '0.25rem 0.5rem',
-          cursor: 'pointer',
-          fontSize: '0.875rem',
-          borderRadius: '0.125rem'
-        }}
-        onMouseEnter={(e) => e.target.style.background = '#333'}
-        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+        style={buttonStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         ✕
       </button>

@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react';
 import { getRecapResponse, getQAResponse, getLookUpResponse } from '../services/textProcessingService';
 
 export const useReaderActions = (renditionRef, selectedText, addNewHighlight, clearSelection, toggleSidebar, currentPageText) => {
-  const [lookUpText, setLookUpText] = useState('');
-  const [lookUpSelectedText, setLookUpSelectedText] = useState('');
+  const [lookupText, setLookupText] = useState('');
+  const [lookupSelectedText, setLookupSelectedText] = useState('');
 
   const handleRecap = useCallback(async () => {
     return await getRecapResponse(renditionRef);
@@ -12,45 +12,41 @@ export const useReaderActions = (renditionRef, selectedText, addNewHighlight, cl
   const handleQA = useCallback(async (query) => {
     if (!query || !renditionRef.current) return 'No question provided or reader not ready.';
 
-    console.log('in handle qa ' + currentPageText);
-    
     try {
-      const isSelected = selectedText && selectedText.text;
-      const selectedTextContent = isSelected ? selectedText.text : '';
-      const selectedContainerText = isSelected && selectedText.range?.startContainer?.data 
+      const hasSelection = selectedText?.text;
+      const selectedTextContent = hasSelection ? selectedText.text : '';
+      const selectedContainerText = hasSelection && selectedText.range?.startContainer?.data 
         ? selectedText.range.startContainer.data 
         : '';
       
-      const qaResponse = await getQAResponse(
+      return await getQAResponse(
         query, 
         renditionRef, 
         selectedTextContent, 
         selectedContainerText, 
-        isSelected,
+        hasSelection,
         currentPageText
       );
-      
-      return qaResponse;
     } catch (error) {
       console.error('Error in handleQA:', error);
       return 'Sorry, there was an error processing your question. Please try again.';
     }
-  }, [selectedText, renditionRef]);
+  }, [selectedText, renditionRef, currentPageText]);
 
   const handleLookup = useCallback(async () => {
     if (!selectedText) return;
     
-    setLookUpSelectedText(selectedText.text);
+    setLookupSelectedText(selectedText.text);
     toggleSidebar();
-    setLookUpText('Loading...');
+    setLookupText('Loading...');
     
-    const lookUpResponse = await getLookUpResponse(
+    const response = await getLookUpResponse(
       renditionRef, 
       selectedText.text, 
       selectedText.range.startContainer.data
     );
-    setLookUpText(lookUpResponse);
-  }, [selectedText, renditionRef]);
+    setLookupText(response);
+  }, [selectedText, renditionRef, toggleSidebar]);
 
   const handleHighlight = useCallback(async () => {
     await addNewHighlight(selectedText);
@@ -58,8 +54,8 @@ export const useReaderActions = (renditionRef, selectedText, addNewHighlight, cl
   }, [selectedText, addNewHighlight, clearSelection]);
 
   return {
-    lookUpText,
-    lookUpSelectedText,
+    lookupText,
+    lookupSelectedText,
     handleRecap,
     handleQA,
     handleLookup,

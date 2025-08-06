@@ -11,37 +11,31 @@ import { useTextSelection } from './hooks/useTextSelection';
 import { useReaderActions } from './hooks/useReaderActions';
 import './App.css';
 
+const DEFAULT_FONT_SIZE = 32;
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [location, setLocation] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState(32);
-  const [currentPageText, setCurrentPageText] = useState('');
+  const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
   }, []);
-  
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   const {
     renditionRef,
     chapters,
     currentPage,
-    currentPageText: hookPageText, // Get the page text from hook
+    currentPageText,
     handleTocChanged,
     handleLocationChanged,
     handleGetRendition
   } = useReaderState();
-
-  // Update App's state when hook's page text changes
-  React.useEffect(() => {
-    if (hookPageText !== currentPageText) {
-      setCurrentPageText(hookPageText);
-      console.log('App.jsx - Page text updated:', {
-        length: hookPageText.length,
-        preview: hookPageText.substring(0, 100) + '...'
-      });
-    }
-  }, [hookPageText, currentPageText]);
 
   const {
     highlights,
@@ -57,8 +51,8 @@ function App() {
   } = useTextSelection(renditionRef);
 
   const {
-    lookUpText,
-    lookUpSelectedText,
+    lookupText,
+    lookupSelectedText,
     handleRecap,
     handleQA,
     handleLookup,
@@ -69,87 +63,83 @@ function App() {
     setLocation(cfi);
   }, []);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
   const updateTheme = (rendition) => {
-    const themes = rendition.themes
+    const themes = rendition.themes;
+    
     if (isDarkMode) {
-        themes.override('color', '#fff')
-        themes.override('background', '#000')
+      themes.override('color', '#fff');
+      themes.override('background', '#000');
     } else {
-        themes.override('color', '#000')
-        themes.override('background', '#fff')
+      themes.override('color', '#000');
+      themes.override('background', '#fff');
     }
-    // Apply font size
-    themes.fontSize(`${(fontSize / 16) * 100}%`)
-  }
-
-  // Reader theme styles
-  const lightReaderTheme = {
-    ...ReactReaderStyle,
-    readerArea: {
-      ...ReactReaderStyle.readerArea,
-      transition: undefined,
-    },
+    
+    themes.fontSize(`${(fontSize / 16) * 100}%`);
   };
 
-  const darkReaderTheme = {
-    ...ReactReaderStyle,
-    arrow: {
-      ...ReactReaderStyle.arrow,
-      color: 'white',
-    },
-    arrowHover: {
-      ...ReactReaderStyle.arrowHover,
-      color: '#ccc',
-    },
-    readerArea: {
-      ...ReactReaderStyle.readerArea,
-      backgroundColor: '#000000',
-      transition: undefined,
-    },
-    titleArea: {
-      ...ReactReaderStyle.titleArea,
-      color: '#ccc',
-    },
-    tocArea: {
-      ...ReactReaderStyle.tocArea,
-      background: '#2d2d2d',
-    },
-    tocButtonExpanded: {
-      ...ReactReaderStyle.tocButtonExpanded,
-      background: '#4a4a4a',
-    },
-    tocButtonBar: {
-      ...ReactReaderStyle.tocButtonBar,
-      background: '#fff',
-    },
-    tocButton: {
-      ...ReactReaderStyle.tocButton,
-      color: 'white',
-    },
+  const createReaderTheme = () => {
+    const baseTheme = {
+      ...ReactReaderStyle,
+      readerArea: {
+        ...ReactReaderStyle.readerArea,
+        transition: undefined,
+      },
+    };
+
+    if (isDarkMode) {
+      return {
+        ...baseTheme,
+        arrow: {
+          ...ReactReaderStyle.arrow,
+          color: 'white',
+        },
+        arrowHover: {
+          ...ReactReaderStyle.arrowHover,
+          color: '#ccc',
+        },
+        readerArea: {
+          ...baseTheme.readerArea,
+          backgroundColor: '#000000',
+        },
+        titleArea: {
+          ...ReactReaderStyle.titleArea,
+          color: '#ccc',
+        },
+        tocArea: {
+          ...ReactReaderStyle.tocArea,
+          background: '#2d2d2d',
+        },
+        tocButtonExpanded: {
+          ...ReactReaderStyle.tocButtonExpanded,
+          background: '#4a4a4a',
+        },
+        tocButtonBar: {
+          ...ReactReaderStyle.tocButtonBar,
+          background: '#fff',
+        },
+        tocButton: {
+          ...ReactReaderStyle.tocButton,
+          color: 'white',
+        },
+      };
+    }
+
+    return baseTheme;
   };
 
   const onGetRendition = useCallback((rendition) => {
     handleGetRendition(rendition, applyHighlights, clearSelection);
-    updateTheme(rendition)
+    updateTheme(rendition);
   }, [handleGetRendition, applyHighlights, clearSelection, isDarkMode, fontSize]);
 
   useEffect(() => {
     if (renditionRef.current) {
-      updateTheme(renditionRef.current)
+      updateTheme(renditionRef.current);
     }
-  }, [isDarkMode, fontSize])
+  }, [isDarkMode, fontSize]);
 
-  // Apply dark mode class to body
   useEffect(() => {
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
+    document.body.classList.toggle('dark-mode', isDarkMode);
   }, [isDarkMode]);
 
   return (
@@ -172,7 +162,7 @@ function App() {
           swipeable={false}
           getRendition={onGetRendition}
           tocChanged={handleTocChanged}
-          readerStyles={isDarkMode ? darkReaderTheme : lightReaderTheme}
+          readerStyles={createReaderTheme()}
         />
         
         <SelectionMenu
@@ -195,11 +185,10 @@ function App() {
         goToChapter={goToChapter} 
         handleRecap={handleRecap}
         highlights={highlights}
-        lookUpText={lookUpText}
-        selectedText={lookUpSelectedText}
+        lookupText={lookupText}
+        selectedText={lookupSelectedText}
         handleQA={handleQA}
         goToCfi={goToChapter}
-        currentPageText={currentPageText}
         deleteHighlight={deleteExistingHighlight}
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
