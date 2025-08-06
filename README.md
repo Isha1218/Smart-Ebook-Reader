@@ -53,41 +53,44 @@ pip install -r requirements.txt
 
 ---
 
----
-
 ## 📸 Feature Previews
 
-### 📑 Table of Contents  
+### 📑 Table of Contents
+
 Navigate chapters easily with the built-in EPUB table of contents.  
-![TOC](screenshots/toc.png)
+![TOC](screenshots/TOC_Ex.png)
 
 ---
 
-### ✍️ Annotations  
+### ✍️ Annotations
+
 Highlight and annotate important passages as you read.  
-![Annotations](screenshots/annotations.png)
+![Annotations](screenshots/Highlight_Ex.png)
 
 ---
 
-### 🌙 Dark Mode  
+### 🌙 Dark Mode
+
 Switch between light and dark themes for a comfortable reading experience.  
-![Dark Mode](screenshots/dark_mode.png)
+![Dark Mode](screenshots/Dark_Mode_Ex.png)
 
 ---
 
-### 🧠 Recap  
+### 🧠 Recap
+
 Get a quick summary of what's happened so far in the story.  
 ![Recap](screenshots/recap.png)
 
 ---
 
-### 🔍 Look Up  
+### 🔍 Look Up
+
 Highlight any character, place, or event to get an in-context explanation.  
-![Look Up](screenshots/lookup.png)
+![Look Up](screenshots/Lookup_Ex.png)
 
 ---
 
-### 💬 Ask a Question  
-Ask natural-language questions about the story and get AI-powered answers.  
-![Q&A](screenshots/qa.png)
+### 💬 Ask a Question
 
+Ask natural-language questions about the story and get AI-powered answers.  
+![Q&A](screenshots/QA_Ex.png)
