@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { AiOutlineMenu } from 'react-icons/ai';
-import { ReactReader } from 'react-reader';
+import { ReactReader, ReactReaderStyle } from 'react-reader';
 import '@fontsource-variable/open-sans';
 
 import Sidebar from './components/Sidebar';
@@ -14,7 +14,8 @@ import './App.css';
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [location, setLocation] = useState(0);
-  // Add state for current page text in App component
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [fontSize, setFontSize] = useState(32);
   const [currentPageText, setCurrentPageText] = useState('');
 
   const toggleSidebar = useCallback(() => {
@@ -68,24 +69,91 @@ function App() {
     setLocation(cfi);
   }, []);
 
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const updateTheme = (rendition) => {
+    const themes = rendition.themes
+    if (isDarkMode) {
+        themes.override('color', '#fff')
+        themes.override('background', '#000')
+    } else {
+        themes.override('color', '#000')
+        themes.override('background', '#fff')
+    }
+    // Apply font size
+    themes.fontSize(`${(fontSize / 16) * 100}%`)
+  }
+
+  // Reader theme styles
+  const lightReaderTheme = {
+    ...ReactReaderStyle,
+    readerArea: {
+      ...ReactReaderStyle.readerArea,
+      transition: undefined,
+    },
+  };
+
+  const darkReaderTheme = {
+    ...ReactReaderStyle,
+    arrow: {
+      ...ReactReaderStyle.arrow,
+      color: 'white',
+    },
+    arrowHover: {
+      ...ReactReaderStyle.arrowHover,
+      color: '#ccc',
+    },
+    readerArea: {
+      ...ReactReaderStyle.readerArea,
+      backgroundColor: '#1a1a1a',
+      transition: undefined,
+    },
+    titleArea: {
+      ...ReactReaderStyle.titleArea,
+      color: '#ccc',
+    },
+    tocArea: {
+      ...ReactReaderStyle.tocArea,
+      background: '#2d2d2d',
+    },
+    tocButtonExpanded: {
+      ...ReactReaderStyle.tocButtonExpanded,
+      background: '#4a4a4a',
+    },
+    tocButtonBar: {
+      ...ReactReaderStyle.tocButtonBar,
+      background: '#fff',
+    },
+    tocButton: {
+      ...ReactReaderStyle.tocButton,
+      color: 'white',
+    },
+  };
+
   const onGetRendition = useCallback((rendition) => {
     handleGetRendition(rendition, applyHighlights, clearSelection);
-  }, [handleGetRendition, applyHighlights, clearSelection]);
+    updateTheme(rendition)
+  }, [handleGetRendition, applyHighlights, clearSelection, isDarkMode, fontSize]);
 
-  // Example function to demonstrate using the current page text
-  const handleAnalyzeCurrentPage = useCallback(() => {
-    if (currentPageText) {
-      console.log('Analyzing current page text:', {
-        wordCount: currentPageText.split(' ').length,
-        charCount: currentPageText.length,
-        text: currentPageText
-      });
-      // You can now use currentPageText for AI analysis, summarization, etc.
+  useEffect(() => {
+    if (renditionRef.current) {
+      updateTheme(renditionRef.current)
     }
-  }, [currentPageText]);
+  }, [isDarkMode, fontSize])
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [isDarkMode]);
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <div className={`main-content ${isSidebarOpen ? 'pushed' : ''}`} style={{ height: '100vh' }}>
         <button onClick={toggleSidebar} className="menu-button">
           <AiOutlineMenu />
@@ -104,6 +172,7 @@ function App() {
           swipeable={false}
           getRendition={onGetRendition}
           tocChanged={handleTocChanged}
+          readerStyles={isDarkMode ? darkReaderTheme : lightReaderTheme}
         />
         
         <SelectionMenu
@@ -132,6 +201,10 @@ function App() {
         goToCfi={goToChapter}
         currentPageText={currentPageText}
         deleteHighlight={deleteExistingHighlight}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
       />
     </div>
   );

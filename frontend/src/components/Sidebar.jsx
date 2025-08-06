@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AiFillBackward, AiOutlineClose, AiOutlineBars, AiOutlineSetting } from "react-icons/ai";
-import { BsHighlighter } from "react-icons/bs";
-import { BiMessageDots, BiSend, BiSearch, BiTrash } from "react-icons/bi";
+import { BsHighlighter, BsMoon, BsSun } from "react-icons/bs";
+import { BiMessageDots, BiSend, BiSearch, BiTrash, BiPlus, BiMinus } from "react-icons/bi";
 import './Sidebar.css';
 
 const ButtonModes = {
@@ -24,7 +24,11 @@ function Sidebar({
   selectedText, 
   handleQA, 
   goToCfi,
-  deleteHighlight
+  deleteHighlight,
+  isDarkMode,
+  toggleDarkMode,
+  fontSize,
+  setFontSize
 }) {
   const [currentMode, setCurrentMode] = useState(ButtonModes.CONTENTS);
   const [question, setQuestion] = useState('');
@@ -62,6 +66,18 @@ function Sidebar({
       e.preventDefault();
       sendQuestion();
     }
+  };
+
+  const increaseFontSize = () => {
+    setFontSize(prev => Math.min(prev + 2, 60)); // Max font size of 24px
+  };
+
+  const decreaseFontSize = () => {
+    setFontSize(prev => Math.max(prev - 2, 10)); // Min font size of 10px
+  };
+
+  const resetFontSize = () => {
+    setFontSize(16); // Reset to default
   };
 
   useEffect(() => {
@@ -104,7 +120,9 @@ function Sidebar({
       case ButtonModes.LOOKUP:
         return (
           <div className="recap">
-            <p className='recap-title'>"{selectedText}"</p>
+            <p className='recap-title'>
+              {selectedText === '' ? '' : `"${selectedText}"`}
+            </p>
             <p className='recap-text'>{lookUpText || 'Select text and click "Look Up" to see definitions and explanations here.'}</p>
           </div>
         );
@@ -154,7 +172,54 @@ function Sidebar({
         );
       
       case ButtonModes.SETTINGS:
-        return <p>Settings go here.</p>;
+        return (
+          <div className="settings-container">
+            <h3 className="settings-title">Settings</h3>
+            
+            <div className="setting-item">
+              <div className="setting-label">
+                <span className="setting-text">Theme</span>
+              </div>
+              <button 
+                className={`theme-toggle ${isDarkMode ? 'dark' : 'light'}`}
+                onClick={toggleDarkMode}
+              >
+                <div className="theme-toggle-track">
+                  <div className="theme-toggle-thumb">
+                    {isDarkMode ? <BsMoon size={12} /> : <BsSun size={12} />}
+                  </div>
+                </div>
+                <span className="theme-label">
+                  {isDarkMode ? 'Dark' : 'Light'}
+                </span>
+              </button>
+            </div>
+
+            {/* Font Size Controls */}
+            <div className="setting-item">
+              <div className="setting-label">
+                <span className="setting-text">Font Size</span>
+                <span className="font-size-display">{fontSize}px</span>
+              </div>
+              <div className="font-size-controls">
+                <button 
+                  className="font-control-btn" 
+                  onClick={decreaseFontSize}
+                  disabled={fontSize <= 10}
+                >
+                  <BiMinus size={20} />
+                </button>
+                <button 
+                  className="font-control-btn" 
+                  onClick={increaseFontSize}
+                  disabled={fontSize >= 60}
+                >
+                  <BiPlus size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
       
       default:
         return <p>Select a tab.</p>;

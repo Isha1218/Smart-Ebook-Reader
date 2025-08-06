@@ -1,5 +1,6 @@
 body, html, * {
   font-family: "Open Sans Variable", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .main-content {
@@ -27,7 +28,7 @@ body, html, #root {
   color: black;
   padding: 0.5rem;
   border-radius: 0.25rem;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.3s ease;
 }
 
 .menu-button:hover {
@@ -52,4 +53,31 @@ body, html, #root {
   border-radius: 1.25rem;
   font-size: 0.875rem;
   backdrop-filter: blur(0.625rem);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode Styles */
+.dark-mode body,
+.dark-mode html,
+.dark-mode #root {
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.dark-mode .app-container {
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.dark-mode .menu-button {
+  color: white;
+}
+
+.dark-mode .menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .pages-left {
+  background: rgba(0, 0, 0, 0.9);
+  color: #A1A1A1;
 }
