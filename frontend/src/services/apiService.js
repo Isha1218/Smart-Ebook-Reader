@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.0.19:5000';
+import { API_BASE_URL } from '../consts/consts';
 
 const makeRequest = async (endpoint, data, method = 'POST') => {
   try {
