@@ -107,7 +107,7 @@ function App() {
     },
     readerArea: {
       ...ReactReaderStyle.readerArea,
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#000000',
       transition: undefined,
     },
     titleArea: {
