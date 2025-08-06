@@ -79,7 +79,7 @@ Switch between light and dark themes for a comfortable reading experience.
 ### 🧠 Recap
 
 Get a quick summary of what's happened so far in the story.  
-![Recap](screenshots/recap.png)
+![Recap](screenshots/Recap_Ex.png)
 
 ---
 
